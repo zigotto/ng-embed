@@ -281,6 +281,10 @@
                             download    : false          //Show/Hide download buttons
                         },
                         spotifyEmbed     : true,
+                        spotifyOptions   : {
+                          width: "100%",
+                          height: 80
+                        },
                         codepenEmbed     : true,
                         codepenHeight    : 300,
                         jsfiddleEmbed    : true,
@@ -562,13 +566,13 @@
                             return str;
                         },
 
-                        spotifyEmbed: function (str) {
+                        spotifyEmbed: function (str, opts) {
                             var spotifyRegex = /spotify.com\/track\/[a-zA-Z0-9_]+/gi;
                             var matches = str.match(spotifyRegex) ? str.match(spotifyRegex).getUnique() : null;
                             if (matches) {
                                 var i = 0;
                                 while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe src="https://embed.spotify.com/?uri=spotify:track:' + matches[i].split('/')[2] + '" height="80"></iframe>');
+                                    var frame = $sce.trustAsHtml('<iframe src="https://embed.spotify.com/?uri=spotify:track:' + matches[i].split('/')[2] + '" width="' + opts.spotifyOptions.width + '" height="' + opts.spotifyOptions.height + '"></iframe>');
                                     scope.audioServices.push(frame);
                                     i++;
                                 }
@@ -804,7 +808,7 @@
                     x = options.dotsubEmbed ? videoProcess.dotsubEmbed(x, options) : x;
                     x = options.liveleakEmbed ? videoProcess.liveleakEmbed(x, options) : x;
                     x = options.soundCloudEmbed ? audioProcess.soundcloudEmbed(x, options) : x;
-                    x = options.spotifyEmbed ? audioProcess.spotifyEmbed(x) : x;
+                    x = options.spotifyEmbed ? audioProcess.spotifyEmbed(x, options) : x;
                     x = options.codepenEmbed ? codeEmbedProcess.codepenEmbed(x, options) : x;
                     x = options.jsfiddleEmbed ? codeEmbedProcess.jsfiddleEmbed(x, options) : x;
                     x = options.jsbinEmbed ? codeEmbedProcess.jsbinEmbed(x, options) : x;
