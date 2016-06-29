@@ -210,6 +210,7 @@
 
                     var data = scope.$eval(attributes.embedData);
                     var userOptions = scope.$eval(attributes.embedOptions);
+                    var embedObject = scope.$eval(attributes.embedObject);
                     scope.video = {};
                     scope.image = {};
                     scope.pdf = {};
@@ -218,6 +219,7 @@
                     scope.audioServices = [];
                     scope.codeServices = [];
                     scope.gist = [];
+                    scope.object = embedObject;
 
                     var options = {
                         link             : true,
@@ -857,4 +859,3 @@
         });
 
 })();
-
