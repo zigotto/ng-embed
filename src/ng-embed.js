@@ -201,25 +201,34 @@
             $templateCache.put(TEMPLATE_URL, template);
 
             return {
-                restrict   : 'AE',
-                scope      : true,
+                restrict: 'AE',
+                scope: {
+                  embedData: "=",
+                  embedOptions: "=",
+                  embedObject: "=",
+                  shouldUpdate: "="
+                },
                 templateUrl: function (element, attributes) {
                     return (attributes.embedTemplateUrl || TEMPLATE_URL);
                 },
-                link       : function (scope, elements, attributes) {
+                link: function (scope, element, attributes) {
+                    var data        = scope.embedData;
+                    var userOptions = scope.embedOptions;
+                    var embedObject = scope.embedObject;
 
-                    var data = scope.$eval(attributes.embedData);
-                    var userOptions = scope.$eval(attributes.embedOptions);
-                    var embedObject = scope.$eval(attributes.embedObject);
-                    scope.video = {};
-                    scope.image = {};
-                    scope.pdf = {};
-                    scope.audio = {};
-                    scope.videoServices = [];
+                    scope.video         = {};
+                    scope.image         = {};
+                    scope.audio         = {};
                     scope.audioServices = [];
-                    scope.codeServices = [];
-                    scope.gist = [];
-                    scope.object = embedObject;
+                    scope.object        = embedObject;
+
+                    scope.$watch("shouldUpdate", updateData);
+
+                    function updateData(newValue, oldValue) {
+                      if (newValue) {
+                        processData(scope.embedData, options);
+                      }
+                    };
 
                     var options = {
                         link             : true,
@@ -462,86 +471,8 @@
                             }
 
                             return data;
-                        },
-
-                        twitchtvEmbed: function (str, opts) {
-                            var twitchRegex = /www.twitch.tv\/[a-zA_Z0-9_]+/gi;
-                            var matches = str.match(twitchRegex) ? str.match(twitchRegex).getUnique() : null;
-                            var videoDimensions = videoProcess.calcDimensions(opts);
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<object bgcolor="#000000" ' +
-                                    'data="//www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" height="' + videoDimensions.height + '" id="clip_embed_player_flash" type="application/x-shockwave-flash" width="' + videoDimensions.width + '">' + '<param name="movie" value="http://www-cdn.jtvnw.net/swflibs/TwitchPlayer.swf" />' + '<param name="allowScriptAccess" value="always" />' + '<param name="allowNetworking" value="all" />' + '<param name="allowFullScreen" value="true" />' + '<param name="flashvars" value="channel=' + matches[i].split('/')[1] + '&auto_play=false" />' + '</object>');
-                                    scope.videoServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        dailymotionEmbed: function (str, opts) {
-                            var dmRegex = /dailymotion.com\/video\/[a-zA-Z0-9-_]+/gi;
-                            var matches = str.match(dmRegex) ? str.match(dmRegex).getUnique() : null;
-                            var videoDimensions = videoProcess.calcDimensions(opts);
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe src="http://www.dailymotion.com/embed/video/' + matches[i].split('/')[2] + '" height="' + videoDimensions.height + '" width="' + videoDimensions.width + '"></iframe>');
-                                    scope.videoServices.push(frame);
-
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        tedEmbed: function (str, opts) {
-                            var tedRegex = /ted.com\/talks\/[a-zA-Z0-9_]+/gi;
-                            var matches = str.match(tedRegex) ? str.match(tedRegex).getUnique() : null;
-                            var videoDimensions = videoProcess.calcDimensions(opts);
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe src="https://embed.ted.com/talks/' + matches[i].split('/')[2] + '.html" ' +
-                                    'height="' + videoDimensions.height + '" width="' + videoDimensions.width + '"></iframe>');
-                                    scope.videoServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        dotsubEmbed: function (str, opts) {
-                            var dotsubRegex = /dotsub.com\/view\/[a-zA-Z0-9-]+/gi;
-                            var matches = str.match(dotsubRegex) ? str.match(dotsubRegex).getUnique() : null;
-                            var videoDimensions = videoProcess.calcDimensions(opts);
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe src="https://dotsub.com/media/' + matches[i].split('/')[2] + '/embed/" width="' + videoDimensions.width + '" height="' + videoDimensions.height + '"></iframe>');
-                                    scope.videoServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        liveleakEmbed: function (str, opts) {
-                            var liveleakRegex = /liveleak.com\/view\?i=[a-zA-Z0-9_]+/gi;
-                            var matches = str.match(liveleakRegex) ? str.match(liveleakRegex).getUnique() : null;
-                            var videoDimensions = videoProcess.calcDimensions(opts);
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe src="http://www.liveleak.com/e/' + matches[i].split('=')[1] + '" height="' + videoDimensions.height + '" width="' + videoDimensions.width + '"></iframe></div>');
-                                    scope.videoServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
                         }
-                    };
+                      };
 
                     var audioProcess = {
                         embed: function (str) {
@@ -559,7 +490,7 @@
                                 var i = 0;
                                 while (i < matches.length) {
                                     var frame = $sce.trustAsHtml('<iframe width="'+ opts.soundCloudOptions.width +'" height="'+ opts.soundCloudOptions.height +'" scrolling="no" ' + 'src="https://w.soundcloud.com/player/?url=https://' + matches[i] + '&auto_play=' + opts.soundCloudOptions.autoPlay + '&hide_related=' + opts.soundCloudOptions.hideRelated + '&show_comments=' + opts.soundCloudOptions.showComments + '&show_user=' + opts.soundCloudOptions.showUser + '&show_reposts=' + opts.soundCloudOptions.showReposts + '&visual=' + opts.soundCloudOptions.visual + '&download=' + opts.soundCloudOptions.download + '&color=' + opts.soundCloudOptions.themeColor + '&theme_color=' + opts.soundCloudOptions.themeColor + '"></iframe>');
-                                    scope.videoServices.push(frame);
+                                    scope.audioServices.push(frame);
                                     i++;
                                 }
                             }
@@ -594,272 +525,38 @@
                         }
                     };
 
-                    var codeProcess = {
+                    var processData = function(data, options) {
+                      if (data) {
+                        scope.video         = {};
+                        scope.image         = {};
+                        scope.audio         = {};
+                        scope.audioServices = [];
 
-                        getCode: function (text) {
-                            text = text.replace(/(`+)(\s|[a-z]+)\s*([\s\S]*?[^`])\s*\1(?!`)/gm,
-                                function (wholeMatch, m1, m2, m3) {
-                                    var c = m3;
-                                    c = c.replace(/^([ \t]*)/g, ""); // leading whitespace
-                                    c = c.replace(/[ \t]*$/g, ""); // trailing whitespace
-                                    c = c.replace(/:\/\//g, "~P"); // to prevent auto-linking. Not necessary in code
-                                                                   // *blocks*, but in code spans. Will be converted
-                                                                   // back after the auto-linker runs.
+                        var x = ($filter('embed')(data, options)).$$unwrapTrustedValue();
 
-                                    var lang = [];
-                                    if (m2) {
-                                        lang.push(m2);
-                                    }
-
-                                    return '<pre><code class="ne-code hljs ' + m2 + '">' + hljs.highlightAuto(c, lang).value + '</code></pre>';
-                                }
-                            );
-                            return text;
-                        }
-                    };
-
-                    var pdfProcess = {
-                        embed: function (str) {
-                            var p = /((?:https?):\/\/\S*\.(?:pdf|PDF))/gi;
-                            if (str.match(p)) {
-                                scope.pdf.url = $sce.trustAsResourceUrl(RegExp.$1);
-
-                            }
-
-                            return str;
-                        }
-                    };
-
-                    var tweetProcess = {
-                        embed: function (str, opts) {
-                            if (!window.twttr) {
-                                throw new ReferenceError('twttr is not defined. Load http://platform.twitter.com/widgets.js');
-                            }
-                            function renderTweet() {
-                                $timeout(function () {
-                                    twttr.widgets.load();
-                                }, 10);
-                            }
-
-                            var tweetRegex = /https:\/\/twitter\.com\/\w+\/\w+\/\d+/gi;
-                            var matches = str.match(tweetRegex) ? str.match(tweetRegex).getUnique() : null;
-                            scope.tweets = [];
-                            if (matches) {
-                                var i = 0;
-
-                                while (i < matches.length) {
-                                    /**
-                                     * callback=JSON_CALLBACK is an angular fix to make sure we get the correct mime type of the
-                                     * received data.
-                                     */
-                                    var url = 'https://api.twitter.com/1/statuses/oembed.json?omit_script=true&callback=JSON_CALLBACK&url=' + matches[i] + '&maxwidth=' + opts.tweetOptions.maxWidth + '&hide_media=' + opts.tweetOptions.hideMedia + '&hide_thread=' + opts.tweetOptions.hideThread + '&align=' + opts.tweetOptions.align + '&lang=' + opts.tweetOptions.lang;
-                                    $http.jsonp(url).success(function (d) {
-                                        scope.tweets.push(d.html);
-                                        if (scope.tweets.length == matches.length) {
-                                            renderTweet();
-                                        }
-                                    });
-                                    i++;
-                                }
-                            }
-                            return str;
-                        }
-                    };
-
-                    var codeEmbedProcess = {
-                        codepenEmbed: function (str, opts) {
-                            var codepenRegex = /http:\/\/codepen.io\/([A-Za-z0-9_]+)\/pen\/([A-Za-z0-9_]+)/gi;
-                            var matches = str.match(codepenRegex) ? str.match(codepenRegex).getUnique() : null;
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe scrolling="no" height="' + opts.codepenHeight + '" src="' + matches[i].replace(/\/pen\//, '/embed/') + '/?height=' + opts.codepenHeight + '" frameborder="no" allowtransparency="true" allowfullscreen="true"></iframe>');
-                                    scope.codeServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        jsfiddleEmbed: function (str, opts) {
-                            var jsfiddleRegex = /jsfiddle.net\/[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+/gi;
-                            var matches = str.match(jsfiddleRegex) ? str.match(jsfiddleRegex).getUnique() : null;
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe height="' + opts.jsfiddleHeight + '" src="http://' + matches[i] + '/embedded"></iframe>');
-                                    scope.codeServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        jsbinEmbed: function (str, opts) {
-                            var jsbinRegex = /jsbin.com\/[a-zA-Z0-9_]+\/[0-9_]+/gi;
-                            var matches = str.match(jsbinRegex) ? str.match(jsbinRegex).getUnique() : null;
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var frame = $sce.trustAsHtml('<iframe height="' + opts.jsbinHeight + '" class="jsbin-embed foo" src="http://' + matches[i] + '/embed?html,js,output">Simple Animation Tests</iframe>');
-                                    scope.codeServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        plunkerEmbed: function (str, opts) {
-                            var plnkrRegex = /plnkr.co\/edit\/[a-zA-Z0-9\?=]+/gi;
-                            var matches = str.match(plnkrRegex) ? str.match(plnkrRegex).getUnique() : null;
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    var idMatch = (matches[i].indexOf('?') === -1) ? (matches[i].split('/')[2]) : (matches[i].split('/')[2].split('?')[0]);
-                                    var frame = $sce.trustAsHtml('<iframe class="ne-plunker" src="http://embed.plnkr.co/' + idMatch + '" height="' + opts.jsbinHeight + '"></iframe>');
-                                    scope.codeServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        },
-
-                        githubgistEmbed: function (str) {
-                            var gistRegex = /gist.github.com\/[a-zA-Z0-9_-]+\/([a-zA-Z0-9]+)/g;
-                            var matches = str.match(gistRegex) ? str.match(gistRegex).getUnique() : null;
-                            if (matches) {
-                                var i = 0;
-                                while (i < matches.length) {
-                                    scope.gist.push(matches[i].split('/')[2]);
-                                    i++;
-                                }
-                            }
-
-                            return str;
-                        },
-
-                        ideoneEmbed:function(str,opts){
-                            var ideoneRegex=/ideone.com\/[a-zA-Z0-9]{6}/gi;
-                            var matches=str.match(ideoneRegex)?str.match(ideoneRegex).getUnique():null;
-                            if(matches){
-                                var i=0;
-                                while(i<matches.length){
-                                    var frame=$sce.trustAsHtml('<iframe src="http://ideone.com/embed/'+matches[i].split('/')[1]+'" height="'+opts.ideoneHeight+'"></iframe>');
-                                    scope.codeServices.push(frame);
-                                    i++;
-                                }
-                            }
-                            return str;
-                        }
-                    };
-
-                    if (options.code.highlight) {
-                        if (!window.hljs) {
-                            throw new ReferenceError('hlsj (Highlight JS is not defined.');
-                        }
-                        else {
-                            data = codeProcess.getCode(data);
-
-                            /**
-                             * Adding line numbers to code
-                             */
-                            $timeout(function () {
-                                if (options.code.lineNumbers) {
-                                    angular.element('.ne-code').each(function () {
-                                        var i = 1;
-                                        var lines = $(this).text().split('\n').length;
-                                        var numbering = $('<ul/>').addClass('pre-numbering');
-                                        angular.element(this)
-                                            .addClass('has-numbering')
-                                            .parent()
-                                            .append(numbering);
-                                        for (i; i <= lines; i++) {
-                                            numbering.append(angular.element('<li/>').text(i));
-                                        }
-                                    });
-                                }
-
-                            }, 0);
-
-                        }
-                    }
-
-
-                    var x = ($filter('embed')(data, options)).$$unwrapTrustedValue();
-
-                    if (options.video.embed) {
-                        if (!options.gdevAuth) {
+                        if (options.video.embed) {
+                          if (!options.gdevAuth) {
                             throw 'Youtube authentication key is required to get data from youtube.';
-                        }
-                        else {
+                          }
+                          else {
                             x = videoProcess.embed(x, options);
+                          }
+
                         }
 
-                    }
+                        x = options.basicVideo       ? videoProcess.embedBasic(x)                   : x;
+                        x = options.audio.embed      ? audioProcess.embed(x)                        : x;
+                        x = options.image.embed      ? imageProcess.embed(x)                        : x;
+                        x = options.soundCloudEmbed  ? audioProcess.soundcloudEmbed(x, options)     : x;
+                        x = options.spotifyEmbed     ? audioProcess.spotifyEmbed(x, options)        : x;
 
-                    x = options.basicVideo ? videoProcess.embedBasic(x) : x;
-                    x = options.audio.embed ? audioProcess.embed(x) : x;
-                    x = options.image.embed ? imageProcess.embed(x) : x;
-                    x = options.pdf.embed ? pdfProcess.embed(x) : x;
-                    x = options.tweetEmbed ? tweetProcess.embed(x, options) : x;
-                    x = options.twitchtvEmbed ? videoProcess.twitchtvEmbed(x, options) : x;
-                    x = options.dailymotionEmbed ? videoProcess.dailymotionEmbed(x, options) : x;
-                    x = options.tedEmbed ? videoProcess.tedEmbed(x, options) : x;
-                    x = options.dotsubEmbed ? videoProcess.dotsubEmbed(x, options) : x;
-                    x = options.liveleakEmbed ? videoProcess.liveleakEmbed(x, options) : x;
-                    x = options.soundCloudEmbed ? audioProcess.soundcloudEmbed(x, options) : x;
-                    x = options.spotifyEmbed ? audioProcess.spotifyEmbed(x, options) : x;
-                    x = options.codepenEmbed ? codeEmbedProcess.codepenEmbed(x, options) : x;
-                    x = options.jsfiddleEmbed ? codeEmbedProcess.jsfiddleEmbed(x, options) : x;
-                    x = options.jsbinEmbed ? codeEmbedProcess.jsbinEmbed(x, options) : x;
-                    x = options.plunkerEmbed ? codeEmbedProcess.plunkerEmbed(x, options) : x;
-                    x = options.githubgistEmbed ? codeEmbedProcess.githubgistEmbed(x, options) : x;
-                    x = options.ideoneEmbed ? codeEmbedProcess.ideoneEmbed(x, options) : x;
+                        scope.neText = $sce.trustAsHtml(x);
+                        scope.shouldUpdate = false;
+                      }
+                    };
 
-
-                    scope.neText = $sce.trustAsHtml(x);
+                    processData(data, options);
                 }
             };
-        }])
-
-        //This directive is a modification of a module developed by Scott Corgan.
-        //present at scottcorgan/angular-gist
-        .directive('neGist', function () {
-            return {
-                restrict: 'EA',
-                replace : true,
-                template: '<div></div>',
-                link    : function (scope, element, attrs) {
-                    var gistId = attrs.id;
-
-                    var iframe = document.createElement('iframe');
-                    iframe.setAttribute('width', '100%');
-                    iframe.setAttribute('frameborder', '0');
-                    iframe.id = "gist-" + gistId;
-                    element[0].appendChild(iframe);
-
-                    var iframeHtml = '<html><head><base target="_parent"><style>table{font-size:12px;}</style>' +
-                        '</head><body onload="parent.document.getElementById(\'' + iframe.id + '\').style.height=' +
-                        'document.body.scrollHeight + \'px\'" style="margin:10px 0;"><script type="text/javascript">' +
-                        '!function(){"use strict";window.retargetLinks=function(){ var gists=' +
-                        'document.getElementsByClassName("gist");for(var i=0,links;i<gists.length;i++){' +
-                        'links=gists[i].getElementsByTagName("a");for(var j=0;j<links.length;j++){ ' +
-                        'links[j].setAttribute("target","_blank");}}}}();</script><script type="text/javascript" ' +
-                        'src="https://gist.github.com/' + gistId + '.js" onload="retargetLinks()"></script></body></html>';
-
-                    var doc = iframe.document;
-                    if (iframe.contentDocument) {
-                        doc = iframe.contentDocument;
-                    }
-                    else if (iframe.contentWindow) {
-                        doc = iframe.contentWindow.document;
-                    }
-
-                    doc.open();
-                    doc.writeln(iframeHtml);
-                    doc.close();
-                }
-            };
-        });
-
+        }]);
 })();
