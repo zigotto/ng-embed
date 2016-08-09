@@ -220,7 +220,6 @@
                     scope.image         = {};
                     scope.audio         = {};
                     scope.audioServices = [];
-                    scope.object        = embedObject;
 
                     scope.$watch("shouldUpdate", updateData);
 
@@ -544,11 +543,11 @@
 
                         }
 
-                        x = options.basicVideo       ? videoProcess.embedBasic(x)                   : x;
-                        x = options.audio.embed      ? audioProcess.embed(x)                        : x;
-                        x = options.image.embed      ? imageProcess.embed(x)                        : x;
-                        x = options.soundCloudEmbed  ? audioProcess.soundcloudEmbed(x, options)     : x;
-                        x = options.spotifyEmbed     ? audioProcess.spotifyEmbed(x, options)        : x;
+                        x = options.basicVideo      ? videoProcess.embedBasic(x)               : x;
+                        x = options.audio.embed     ? audioProcess.embed(x)                    : x;
+                        x = options.image.embed     ? imageProcess.embed(x)                    : x;
+                        x = options.soundCloudEmbed ? audioProcess.soundcloudEmbed(x, options) : x;
+                        x = options.spotifyEmbed    ? audioProcess.spotifyEmbed(x, options)    : x;
 
                         scope.neText = $sce.trustAsHtml(x);
                         scope.shouldUpdate = false;
