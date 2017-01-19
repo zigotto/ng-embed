@@ -394,21 +394,24 @@
                                             var autoPlay = ((options.video.autoPlay === undefined) || (options.video.autoPlay === true)) ? '?autoplay=1' : '?autoplay=0';
                                             var ytData = d.items[0];
 
-                                            scope.video.host = 'youtube';
-                                            scope.video.title = ytData.snippet.title;
-                                            scope.video.thumbnail = ytData.snippet.thumbnails.medium.url;
-                                            scope.video.description = (ytData.snippet.description.trunc(250, true)).replace(/\n/g, ' ').replace(/&#10;/g, ' ');
-                                            scope.video.rawDescription = ytData.snippet.description;
-                                            scope.video.views = ytData.statistics.viewCount;
-                                            scope.video.likes = ytData.statistics.likeCount;
-                                            scope.video.uploader = ytData.snippet.channelTitle;
-                                            scope.video.uploaderPage = 'https://www.youtube.com/channel/' + ytData.snippet.channelId;
-                                            scope.video.uploadDate = ytData.snippet.publishedAt;
-                                            scope.video.url = $sce.trustAsResourceUrl("https://www.youtube.com/watch?v=" + ytData.id);
-                                            scope.video.embedSrc = $sce.trustAsResourceUrl('https://www.youtube.com/embed/' + scope.video.id + autoPlay);
-                                            scope.video.width = youtubeDimensions.width;
-                                            scope.video.height = youtubeDimensions.height;
-
+                                            if (ytData) {
+                                              scope.video.host = 'youtube';
+                                              scope.video.title = ytData.snippet.title;
+                                              scope.video.thumbnail = ytData.snippet.thumbnails.medium.url;
+                                              scope.video.description = (ytData.snippet.description.trunc(250, true)).replace(/\n/g, ' ').replace(/&#10;/g, ' ');
+                                              scope.video.rawDescription = ytData.snippet.description;
+                                              scope.video.views = ytData.statistics.viewCount;
+                                              scope.video.likes = ytData.statistics.likeCount;
+                                              scope.video.uploader = ytData.snippet.channelTitle;
+                                              scope.video.uploaderPage = 'https://www.youtube.com/channel/' + ytData.snippet.channelId;
+                                              scope.video.uploadDate = ytData.snippet.publishedAt;
+                                              scope.video.url = $sce.trustAsResourceUrl("https://www.youtube.com/watch?v=" + ytData.id);
+                                              scope.video.embedSrc = $sce.trustAsResourceUrl('https://www.youtube.com/embed/' + scope.video.id + autoPlay);
+                                              scope.video.width = youtubeDimensions.width;
+                                              scope.video.height = youtubeDimensions.height;
+                                            } else {
+                                              scope.video = {};
+                                            }
                                         });
                                 }
                                 else {
